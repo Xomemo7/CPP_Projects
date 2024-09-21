@@ -1,0 +1,150 @@
+#include<iostream>
+using namespace std;
+enum enGameChoice { Rock = 1, Paper = 2, Scissor = 3 };
+enum enGameResult { Draw, Win, Lose };
+int ReadPositiveNumber(string Message)
+{
+	int Number = 0;
+	do
+	{
+		cout << Message << endl;
+		cin >> Number;
+	} while (Number < 0);
+	return Number;
+}
+int ReadNumberInRange(string Message, int From, int To)
+{
+	int Number = 0;
+	do
+	{
+		cout << Message << endl;
+		cin >> Number;
+	} while (Number < From || Number>To);
+	return Number;
+}
+int RandomNumber(int From, int To)
+{
+	int randNum = rand() % (To - From + 1) + From;
+	return randNum;
+}
+string strGameChoice(enGameChoice Choice)
+{
+	switch (Choice)
+	{
+		case Rock
+		:return "Rock";
+			case Paper
+			:return "Paper";
+				case Scissor
+				:return "Scissor";
+	}
+}
+enGameResult GetRoundResult(enGameChoice PlayerChoice, enGameChoice ComputerChoice)
+{
+	if (PlayerChoice == ComputerChoice)
+		return Draw;
+	else if (PlayerChoice == Rock)
+		if (ComputerChoice == Scissor)
+			return Win;
+		else
+			return Lose;
+	else if (PlayerChoice == Paper)
+		if (ComputerChoice == Rock)
+			return Win;
+		else
+			return Lose;
+	else if (PlayerChoice == Scissor)
+		if (ComputerChoice == Paper)
+			return Win;
+		else
+			return Lose;
+}
+void PrintGameResult(enGameChoice PlayerChoice, enGameChoice ComputerChoice)
+{
+	cout << "Your choice is: " << strGameChoice(PlayerChoice) << endl;
+	cout << "Computer choice is: " << strGameChoice(ComputerChoice) << endl;
+	if (GetRoundResult(PlayerChoice, ComputerChoice) == Draw)
+	{
+		system("Color 6C");
+		cout << "Draw\n";
+	}
+	else if (GetRoundResult(PlayerChoice, ComputerChoice) == Win)
+	{
+		system("Color 2C");
+		cout << "You Win\n";
+	}
+	else
+	{
+		system("Color 4C");
+		cout << "You Lose\n";
+	}
+}
+void GetWinsLosesDrawsCount(enGameResult RoundResult, short& PlayerWinsCount, short& ComputerWinsCount, short& DrawsCount)
+{
+
+	switch (RoundResult)
+	{
+	case Win: ++PlayerWinsCount; break;
+	case Lose: ++ComputerWinsCount; break;
+	case Draw: ++DrawsCount; break;
+	}
+}
+void PrintMultipleRounds(short NumberOfRounds, short& PlayerWinsCount, short& ComputerWinsCount, short& DrawsCount)
+{
+
+	enGameResult RoundResult;
+	for (short i = 0; i < NumberOfRounds; i++)
+	{
+		cout << "\nRound [" << i + 1 << "] begins:\n\n";
+		enGameChoice PlayerChoice = (enGameChoice)ReadNumberInRange("Your choice is:[1]=Rock,[2]=Paper,[3]=Scissor:", 1, 3);
+		cout << "____________________________Round [" << i + 1 << "]____________________________\n\n";
+		enGameChoice ComputerChoice = (enGameChoice)RandomNumber(1, 3);
+		RoundResult = GetRoundResult(PlayerChoice, ComputerChoice);
+		GetWinsLosesDrawsCount(RoundResult, PlayerWinsCount, ComputerWinsCount, DrawsCount);
+		PrintGameResult(PlayerChoice, ComputerChoice);
+		cout << "_________________________________________________________________\n";
+	}
+}
+void PrintTotalResultOfRounds(short PlayerWinsCount, short ComputerWinsCount, short DrawsCount)
+{
+	cout << "\n\n\t\t******************GameOver******************\n\n";
+	cout << "\t\t_____________Total Rounds Result_____________\n";
+	cout << "\t\tCount of player wins: " << PlayerWinsCount << endl;
+	cout << "\t\tCount of computer wins: " << ComputerWinsCount << endl;
+	cout << "\t\tCount of draws: " << DrawsCount << endl;
+	if (PlayerWinsCount > ComputerWinsCount)
+	{
+		system("Color 2C");
+		cout << "\t\tCongratz you have won :-)\n";
+	}
+	else if (PlayerWinsCount < ComputerWinsCount)
+	{
+		system("Color 4C");
+		cout << "\t\tHardluck another time :-(\n";
+	}
+	else
+	{
+		system("Color 6C");
+		cout << "\t\tIt is a draw -_-\n";
+	}
+
+}
+int main()
+{
+	srand((unsigned)time(NULL));
+	bool IsResetGame = false;
+	do
+	{
+		system("CLS");
+		system("Color 0C");
+		short PlayerWinsCount = 0, ComputerWinsCount = 0, DrawsCount = 0;
+		short NumberOfRounds = ReadNumberInRange("How many rounds[1-10]? ", 1, 10);
+		PrintMultipleRounds(NumberOfRounds, PlayerWinsCount, ComputerWinsCount, DrawsCount);
+		cout << "You have completed your round, press any key to continue\n";
+		system("pause>0");
+		PrintTotalResultOfRounds(PlayerWinsCount, ComputerWinsCount, DrawsCount);
+		cout << "Do you want to play again?[1]=yes,[0]=No: \n";
+		cin >> IsResetGame;
+	} while (IsResetGame);
+	return 0;
+}

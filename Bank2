@@ -1,0 +1,318 @@
+#include<iostream>
+#include<vector>
+#include<iomanip>
+#include<string>
+#include<fstream>
+using namespace std;
+enum enMenuChoice{Show=1,Add,Delete,Update,Find,Exit};
+struct stClient
+{
+	string AccountNumber="";
+	string PIN = "";
+	string Name = "";
+	string Phone = "";
+	int Balance=0;
+	bool Token = false;
+};
+stClient ReadClientInfo()
+{
+	stClient Client;
+	cout << "Enter account number: ";
+	cin >> Client.AccountNumber;
+	cout << "Enter PIN Code:";
+	cin >> Client.PIN;
+	cout << "Enter client name:";
+	cin >> Client.Name;
+	cout << "Enter phone number:";
+	cin >> Client.Phone;
+	cout << "Enter balance:";
+	cin >> Client.Balance;
+	return Client;
+}
+string ConvertRecordToLine(stClient Client,string Separator="/#/")
+{
+	string Line="";
+	Line = Line + Client.AccountNumber +Separator ;
+	Line = Line + Client.PIN + Separator;
+	Line = Line + Client.Name + Separator;
+	Line = Line + Client.Phone + Separator;
+	Line = Line + to_string(Client.Balance);
+	return Line;
+}
+stClient AddNewClient()
+{
+	stClient Client;
+	fstream MyFile;
+	MyFile.open("Clients.txt", ios::out | ios::app);
+	if (MyFile.is_open())
+	{
+		Client = ReadClientInfo();
+		MyFile << ConvertRecordToLine(Client) << endl;
+		MyFile.close();
+	}
+	return Client;
+}
+void AddNewClientScreen()
+{
+	system("CLS");
+	cout << "=================================================\n";
+	cout << "                  Add New Client\n";
+	cout << "=================================================\n";
+
+	AddNewClient();
+
+	cout << "\n**********************************\n";
+	cout << "Client has been successfully added\n";
+	cout << "**********************************\n";
+
+}
+vector<string>SplitString(string str, string Separator= "/#/")
+{
+	vector<string>vString;
+
+	short pos = 0;
+	string sWord;
+	while ((pos = str.find(Separator)) != std::string::npos)
+	{
+		sWord = str.substr(0, pos);
+		if (sWord != "")
+		{
+			vString.push_back(sWord);
+		}
+		str.erase(0, pos + Separator.length());
+	}
+	if (str != "")
+	{
+		vString.push_back(str);
+	}
+
+	return vString;
+}
+string JoinString(vector <string>& vString, string Separator= "/#/")
+{
+	string WholeString = "";
+	for (string& i : vString)
+	{
+		WholeString = WholeString + i + Separator;
+	}
+	return WholeString.substr(0, WholeString.size() - Separator.size());
+}
+vector <string> LoadFileContent(string FileName)
+{
+	vector<string>vLines;
+	fstream MyFile;
+	MyFile.open(FileName, ios::in);
+	if (MyFile.is_open())
+	{
+		string Line;
+		while (getline(MyFile, Line))
+		{
+			vLines.push_back(Line);
+		}
+
+		MyFile.close();
+	}
+	return vLines;
+}
+stClient LoadClient(string Line)
+{
+	stClient Client;
+	vector<string>vWords;
+	vWords = SplitString(Line);
+
+	Client.AccountNumber = vWords[0];
+	Client.PIN = vWords[1];
+	Client.Name = vWords[2];
+	Client.Phone = vWords[3];
+	Client.Balance = stoi(vWords[4]);
+	return Client;
+}
+vector <stClient> LoadClients(string FileName)
+{
+	vector<stClient> vClients;
+	vector<string>vLines=LoadFileContent(FileName);
+	for (string& Line : vLines)
+	{
+		vClients.push_back(LoadClient(Line));
+	}
+	return vClients;
+}
+void ShowClient(stClient Client)
+{
+	cout << "Account Number: ";
+	cout << Client.AccountNumber << endl;
+	cout << "PIN Code      : ";
+	cout << Client.PIN << endl;
+	cout << "Name          : ";
+	cout << Client.Name << endl;
+	cout << "Phone         : ";
+	cout << Client.Phone << endl;
+	cout << "Balance       : ";
+	cout << Client.Balance << endl;
+}
+bool FindAndGetClient(string NumberToFind,stClient &Client)
+{
+	vector <stClient>vClients;
+	vClients = LoadClients("Clients.txt");
+	for (stClient& client : vClients)
+	{
+		if (client.AccountNumber == NumberToFind)
+		{
+			Client = client;
+			return true;
+		}
+	}	
+	return false;
+}
+void FindClientScreen()
+{
+	stClient Client;
+	string NumberToFind="";
+	system("CLS");
+	cout << "=================================================\n";
+	cout << "                   Find Client\n";
+	cout << "=================================================\n";
+	cout << "Enter Account Number: ";
+	cin >> NumberToFind;
+	if (FindAndGetClient(NumberToFind, Client))
+		ShowClient(Client);
+	else
+		cout << "Client was not found\n";
+}
+void DeleteClient(string NumberToDelete,stClient &ClientToDelete,string FileName)
+{
+	fstream MyFile;
+	vector <stClient> vClients = LoadClients(FileName);
+	MyFile.open(FileName, ios::out);
+	if (MyFile.is_open())
+	{
+		for (stClient& Client : vClients)
+		{
+			if (Client.AccountNumber != NumberToDelete)
+				MyFile << ConvertRecordToLine(Client)<<endl;
+			else
+			{
+				ClientToDelete = Client;
+				ClientToDelete.Token = true;
+			}
+		}
+		MyFile.close();
+	}
+}
+void DeleteClientScreen()
+{
+	stClient ClientToDelete;
+	string NumberToDelete = "";
+	system("CLS");
+	cout << "=================================================\n";
+	cout << "                   Delete Client\n";
+	cout << "=================================================\n";
+	cout << "Enter Account Number for client to delete: ";
+	cin >> NumberToDelete;
+	DeleteClient(NumberToDelete,ClientToDelete,"Clients.txt");
+	if (ClientToDelete.Token)
+	{
+		cout << "\n**********************************\n";
+		cout << "Client has been successfully deleted\n";
+		cout << "**********************************\n";
+	}
+		
+	else
+		cout << "Client was not found\n";
+}
+void UpdateClient(string NumberToUpdate, stClient& ClientToUpdate,string FileName)
+{
+	fstream MyFile;
+	vector <stClient> vClients = LoadClients(FileName);
+	MyFile.open(FileName, ios::out);
+	if (MyFile.is_open())
+	{
+		for (stClient& Client : vClients)
+		{
+			if (Client.AccountNumber != NumberToUpdate)
+				MyFile << ConvertRecordToLine(Client) << endl;
+			else
+			{
+				ClientToUpdate = AddNewClient();
+				MyFile << ConvertRecordToLine(ClientToUpdate)<<endl;
+				ClientToUpdate.Token = true;
+			}
+		}
+		MyFile.close();
+	}
+}
+void UpdateClientScreen()
+{
+	stClient ClientToUpdate;
+	string NumberToUpdate = "";
+	system("CLS");
+	cout << "=================================================\n";
+	cout << "                   Update Client\n";
+	cout << "=================================================\n";
+	cout << "Enter Account Number for client update: ";
+	cin >> NumberToUpdate;
+	UpdateClient(NumberToUpdate, ClientToUpdate, "Clients.txt");
+	if (ClientToUpdate.Token)
+	{
+		cout << "\n**********************************\n";
+		cout << "Client has been successfully updated\n";
+		cout << "**********************************\n";
+	}
+	else
+		cout << "Client was not found\n";
+}
+void ShowClientList()
+{
+	vector <stClient>vClients;
+	vClients = LoadClients("Clients.txt");
+	system("CLS");
+	cout << "                                            Client List ["<<vClients.size()<<"]\n";
+	cout << "_________________________________________________________________________________\n\n";
+	cout << "| " << left << setw(14) << "Account Number" << " | " << left << setw(10) << "PIN Code" << " | " << left<<setw(20) <<"Client Name" << " | " << left << setw(14) << "Phone" << " | " << left << setw(10) << "Balance"<< endl;
+	cout << "_________________________________________________________________________________\n\n";
+	
+	for (stClient& Client : vClients)
+	{
+		cout << "| " << left << setw(14) << Client.AccountNumber << " | " << left << setw(10) << Client.PIN << " | " << left << setw(20) << Client.Name << " | " << left << setw(14) << Client.Phone << " | " << left << setw(10) << Client.Balance << endl;
+	}
+}
+void ActivateMenuChoice(enMenuChoice MenuChoice)
+{
+	if (MenuChoice == Exit)
+		return;
+	else if (MenuChoice == Show)
+		ShowClientList();
+	else if (MenuChoice == Add)
+		AddNewClientScreen();
+	else if (MenuChoice == Delete)
+		DeleteClientScreen();
+	else if (MenuChoice == Update)
+		UpdateClientScreen();
+	else if (MenuChoice == Find)
+		FindClientScreen();
+}
+void ShowMainMenu()
+{
+	int Choice;
+	enMenuChoice MenuChoice;
+	system("CLS");
+	cout << "=================================================\n";
+	cout << "                  Main Menu Screen\n";
+	cout << "=================================================\n";
+	cout << "      [1] Show Clients List.\n";
+	cout << "      [2] Add New Client.\n";
+	cout << "      [3] Delete Client.\n";
+	cout << "      [4] Update Client Info.\n";
+	cout << "      [5] Find Client.\n";
+	cout << "      [6] Exit.\n";
+	cout << "=================================================\n";
+	cout << "Choose what do you want to do [1-6]?\n";
+	cin >> Choice;
+	MenuChoice = enMenuChoice(Choice);
+	ActivateMenuChoice(MenuChoice);
+}
+int main()
+{
+	ShowMainMenu();
+}
+

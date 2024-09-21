@@ -1,0 +1,157 @@
+#pragma once
+#include<iostream>
+#include<queue>
+#include<string>
+#include"clsDate.h"
+#include<vector>
+using namespace std;
+
+class clsQueueLine
+{
+private:
+	int _WaitingClients = 0;
+	int _ServedClients = 0;
+	int _TicketCounter=0;
+	string _Prefix;
+	short _PredictedTimeUntilServe;
+	struct stTicket
+	{
+		string _TicketName;
+		string _TicketIssueDateAndTime;
+		short _WaitingTime;
+		int _NumberOfClientsBefore=0;
+	};
+
+	queue <stTicket> _ReverseQueue(queue <stTicket> MyQueue)
+	{
+		vector<stTicket>TempVector;
+		queue <stTicket>ReverseQueue;
+		while (!MyQueue.empty())
+		{
+			TempVector.push_back(MyQueue.front());
+			MyQueue.pop();
+			
+		}
+		while (!TempVector.empty())
+		{
+			ReverseQueue.push(TempVector.back());
+			TempVector.pop_back();
+		}
+		return ReverseQueue;
+
+	}
+protected:
+	queue <stTicket> MyQueue;
+public:
+	clsQueueLine(string Prefix,short PredictedTimeUntilServe)
+	{
+		_Prefix = Prefix;
+		_PredictedTimeUntilServe = PredictedTimeUntilServe;
+	}
+
+	void IssueTicket()
+	{
+		_TicketCounter++;
+		_WaitingClients++;
+		stTicket Ticket;
+		Ticket._TicketName = _Prefix + to_string(_TicketCounter);
+		Ticket._TicketIssueDateAndTime = clsDate::GetSystemDateTimeString();
+		Ticket._WaitingTime = _PredictedTimeUntilServe * MyQueue.size();
+		Ticket._NumberOfClientsBefore = Ticket._WaitingTime/ _PredictedTimeUntilServe;
+		MyQueue.push(Ticket);
+	}
+
+	void PrintInfo()
+	{
+		cout << "\n\t\t\t\t\t  _____________________________________\n";
+		cout << "\n\t\t\t\t\t\t\tQueue Info\n";
+		cout << "\t\t\t\t\t  _____________________________________\n";
+		cout << "\n\t\t\t\t\t\tPrefix  = " << _Prefix;
+		cout << "\n\t\t\t\t\t\tTotal Tickets  = " << _TicketCounter;
+		cout << "\n\t\t\t\t\t\tServed Clients  = " <<_ServedClients;
+		cout << "\n\t\t\t\t\t\tWaiting Clients  = " << _WaitingClients;
+		cout << "\n\t\t\t\t\t  _____________________________________\n";
+		PrintTicketsLineRTL();
+		PrintTicketsLineLTR();
+	}
+
+	void PrintTicketsLineRTL()
+	{
+		queue <stTicket> MyTempQueue= MyQueue;
+		stTicket Ticket;
+		string Line;
+		
+		while (!MyTempQueue.empty())
+		{
+			Ticket=MyTempQueue.front();
+			Line += (Ticket._TicketName + " <-- ");
+			MyTempQueue.pop();
+		}
+		cout << "\n\n\t\t  Tickets:   "+Line;
+	}
+
+	void PrintTicketsLineLTR()
+	{
+		queue <stTicket> MyTempQueue = _ReverseQueue(MyQueue);
+		stTicket Ticket;
+		string Line;
+
+		while (!MyTempQueue.empty())
+		{
+			Ticket = MyTempQueue.front();
+			Line += (Ticket._TicketName + " --> ");
+			MyTempQueue.pop();
+		}
+		cout << "\n\n\t\t  Tickets:   " + Line;
+	}
+	
+	void PrintTicket(stTicket Ticket)
+	{
+		cout << "\n\t\t\t\t\t  _____________________________________\n";
+		cout << "\n\t\t\t\t\t\t\t" + Ticket._TicketName << endl;
+		cout << "\n\t\t\t\t\t\t" + Ticket._TicketIssueDateAndTime;
+		cout << "\n\t\t\t\t\t\tWaiting Clients = " + to_string(Ticket._NumberOfClientsBefore);
+		cout << "\n\t\t\t\t\t\t  Serve Time in:\n\t\t\t\t\t\t   " 
+			 + to_string(Ticket._WaitingTime) + " Minutes.";
+		cout << "\n\t\t\t\t\t  _____________________________________\n";
+	}
+
+	void PrintAllTickets()
+	{
+		queue <stTicket> MyTempQueue = MyQueue;
+		cout << "\n\n\t\t\t\t\t\t       ---Tickets---\n";
+		while (!MyTempQueue.empty())
+		{
+			PrintTicket(MyTempQueue.front());
+			MyTempQueue.pop();
+		}
+
+	}
+
+	void ServeNextClient()
+	{
+		
+		queue <stTicket> MyTempQueue;
+		stTicket Ticket;
+
+
+		while (!MyQueue.empty())
+		{
+			Ticket = MyQueue.front();
+			Ticket._WaitingTime -= _PredictedTimeUntilServe;
+			Ticket._NumberOfClientsBefore = Ticket._WaitingTime / _PredictedTimeUntilServe;
+			MyTempQueue.push(Ticket);
+			MyQueue.pop();
+		}
+		MyQueue = MyTempQueue;
+
+		_ServedClients++;
+		_WaitingClients--;
+		
+		MyQueue.pop();
+	}
+
+
+
+
+};
